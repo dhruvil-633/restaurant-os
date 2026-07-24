@@ -1,0 +1,75 @@
+# Render blueprint for the RestaurantOS API.
+# Import this repository at https://dashboard.render.com/blueprints and Render
+# will provision the service from this file.
+#
+# Values marked `sync: false` are prompted for on first deploy and are never
+# committed — DATABASE_URL comes from Supabase, the JWT secrets are generated.
+
+services:
+  - type: web
+    name: restaurant-os-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Render injects PORT; the server reads it through the env schema.
+      - key: PORT
+        value: 10000
+
+      # Supabase → Project Settings → Database → Connection string → URI.
+      # Use the pooler host, and URL-encode any special characters in the password.
+      - key: DATABASE_URL
+        sync: false
+
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+
+      # Comma-separated. Set this to your Vercel domain after the first deploy.
+      - key: CORS_ORIGINS
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+
+      # Optional — uploads fall back to local disk, which is ephemeral on Render.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: restaurant-os
+
+      # Optional — email falls back to console logging.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: RestaurantOS
+      - key: MAIL_FROM_ADDRESS
+        value: no-reply@restaurantos.app
+
+      - key: RATE_LIMIT_WINDOW_MINUTES
+        value: 15
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 500
+      - key: AUTH_RATE_LIMIT_MAX_REQUESTS
+        value: 30
