@@ -29,16 +29,34 @@ export const db = drizzle(queryClient, { schema, logger: false });
 
 export type Database = typeof db;
 
+/**
+ * Drizzle wraps driver errors, which buries the line that actually explains the
+ * failure ("password authentication failed", "database does not exist"). This
+ * unwraps the cause chain so the boot log names the real problem.
+ */
+function rootCauseOf(error: unknown): string {
+  let current = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    const cause = (current as { cause?: unknown } | null)?.cause;
+    if (!cause) break;
+    current = cause;
+  }
+  return current instanceof Error ? current.message : String(current);
+}
+
 export async function verifyDatabaseConnection(): Promise<void> {
   try {
     await db.execute(sql`select 1`);
     const target = usesTransactionPooler ? 'transaction pooler' : 'session pooler';
     logger.info(`Database connected (${isLocal ? 'local' : target})`);
   } catch (error) {
-    logger.error('Database connection failed', error);
+    const reason = rootCauseOf(error);
+    logger.error(`Database connection failed — ${reason}`);
+
     throw new Error(
-      'Could not reach the database. Check DATABASE_URL in backend/.env — for Supabase, ' +
-        'copy the URI from Project Settings → Database and URL-encode the password.',
+      `Could not reach the database: ${reason}\n` +
+        '  Check DATABASE_URL in backend/.env. For Supabase, copy the URI from\n' +
+        '  Project Settings → Database and URL-encode any special characters in the password.',
     );
   }
 }
