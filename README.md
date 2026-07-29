@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🍽️ RestaurantOS
+# 🍽️ RestaurantOS by Rajvee
 
 **The operating system for modern restaurants.**
 
