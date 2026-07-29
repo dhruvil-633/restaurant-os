@@ -12,7 +12,9 @@ services:
     plan: free
     region: singapore
     rootDir: backend
-    buildCommand: npm ci && npm run build
+    # NODE_ENV=production below makes npm skip devDependencies, and the
+    # TypeScript compiler lives there — so the build needs it explicitly.
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /health
     autoDeploy: true
