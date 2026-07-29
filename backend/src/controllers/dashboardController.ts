@@ -71,7 +71,10 @@ export const getOverview = asyncHandler(async (_req: Request, res: Response) => 
     db
       .select({
         total: sql<number>`count(*)::int`,
-        newToday: sql<number>`count(*) filter (where ${customers.createdAt} >= ${today})::int`,
+        // Inside a raw `filter (where ...)` fragment there is no column-type
+        // context, so a bare Date cannot be serialised by the driver. Pass an
+        // ISO string and cast it explicitly.
+        newToday: sql<number>`count(*) filter (where ${customers.createdAt} >= ${today.toISOString()}::timestamptz)::int`,
         returning: sql<number>`count(*) filter (where ${customers.visitCount} > 1)::int`,
       })
       .from(customers),

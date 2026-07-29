@@ -82,15 +82,23 @@ export const listCustomers = asyncHandler(async (req: Request, res: Response) =>
   );
 });
 
-/** Quick lookup by phone — how the floor recognises a returning guest. */
+/**
+ * Quick lookup by phone — how the floor recognises a returning guest.
+ *
+ * Both sides are reduced to digits before comparing, because the same number
+ * gets stored in many shapes ("+91 90000 12345", "090000-12345") and staff
+ * type it a different way again. A literal substring match would miss almost
+ * every returning guest.
+ */
 export const findCustomerByPhone = asyncHandler(async (req: Request, res: Response) => {
-  const phone = typeof req.query.phone === 'string' ? req.query.phone.trim() : '';
-  if (phone.length < 4) throw ApiError.badRequest('Enter at least 4 digits');
+  const digits = (typeof req.query.phone === 'string' ? req.query.phone : '').replace(/\D/g, '');
+  if (digits.length < 4) throw ApiError.badRequest('Enter at least 4 digits');
 
   const [row] = await db
     .select()
     .from(customers)
-    .where(ilike(customers.phone, `%${phone}%`))
+    .where(sql`regexp_replace(${customers.phone}, '[^0-9]', '', 'g') like ${`%${digits}%`}`)
+    .orderBy(desc(customers.lastVisitAt))
     .limit(1);
 
   sendSuccess(res, row ? toCustomerDto(row) : null, row ? 'Customer found' : 'No match');
