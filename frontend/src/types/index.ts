@@ -328,7 +328,8 @@ export interface Employee {
   address: string | null;
   emergencyContact: string | null;
   avatarUrl: string | null;
-  monthlySalary: number;
+  /** Null unless the viewer is an owner — pay is not a manager's to see. */
+  monthlySalary: number | null;
   hiredAt: string;
   isActive: boolean;
   createdAt: string;
@@ -690,4 +691,111 @@ export interface UploadedFile {
   url: string;
   storageKey: string;
   provider: string;
+}
+
+/* ── Guest-facing (public, no auth) ─────────────────────────────────────── */
+
+export interface PublicMenuItem {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  prepTimeMinutes: number;
+  isVegetarian: boolean;
+  spiceLevel: number;
+  calories: number | null;
+  isFeatured: boolean;
+}
+
+export interface PublicMenu {
+  restaurant: {
+    name: string;
+    address: string;
+    phone: string;
+    currencySymbol: string;
+    taxRatePercent: number;
+  };
+  categories: {
+    id: string;
+    name: string;
+    type: string;
+    description: string | null;
+    items: PublicMenuItem[];
+  }[];
+}
+
+export interface PublicOrderReceipt {
+  orderNumber: string;
+  status: string;
+  type: string;
+  subtotal: number;
+  taxAmount: number;
+  total: number;
+  estimatedMinutes: number;
+  placedAt: string;
+  items: { name: string; quantity: number; lineTotal: number }[];
+}
+
+export interface PublicOrderStatus {
+  orderNumber: string;
+  status: OrderStatus;
+  type: string;
+  total: number;
+  customerName: string;
+  placedAt: string;
+  readyAt: string | null;
+  completedAt: string | null;
+  stageIndex: number;
+  elapsedMinutes: number;
+  items: { name: string; quantity: number }[];
+}
+
+/* ── Personal performance (waiter / chef / cashier) ─────────────────────── */
+
+export interface MyPerformance {
+  role: UserRole;
+  focus: 'kitchen' | 'floor';
+  today: { orders: number; completed: number; revenue: number; guests: number };
+  week: { orders: number; revenue: number };
+  month: {
+    orders: number;
+    revenue: number;
+    averageServiceMinutes: number;
+    averageCookMinutes: number;
+  };
+  rating: { average: number | null; reviewCount: number };
+  employment: {
+    employeeCode: string;
+    position: string;
+    department: string;
+    monthlySalary: number;
+    hiredAt: string;
+  } | null;
+  attendance: {
+    presentDays: number;
+    totalDays: number;
+    rate: number;
+    hoursWorked: number;
+  } | null;
+  recentAttendance: { workDate: string; status: string; hoursWorked: number }[];
+  myTables: { id: string; label: string; status: string; section: string; capacity: number }[];
+  topDishes: { name: string; quantity: number }[];
+  recentOrders: {
+    id: string;
+    orderNumber: string;
+    status: OrderStatus;
+    type: string;
+    total: number;
+    placedAt: string;
+    tableLabel: string | null;
+  }[];
+  recentReviews: {
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: string;
+    orderNumber: string;
+  }[];
 }

@@ -54,7 +54,7 @@ export default function ReservationsPage() {
   const today = useQuery({
     queryKey: QUERY_KEYS.reservationsToday,
     queryFn: reservationService.today,
-    refetchInterval: 60_000,
+    refetchInterval: 180_000,
   });
 
   const upcoming = useQuery({

@@ -17,16 +17,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-/** Seeded accounts, so the demo can be explored without hunting for credentials. */
-const DEMO_ACCOUNTS = [
-  { label: 'Owner', email: 'owner@restaurantos.app' },
-  { label: 'Manager', email: 'manager@restaurantos.app' },
-  { label: 'Waiter', email: 'waiter@restaurantos.app' },
-  { label: 'Chef', email: 'chef@restaurantos.app' },
-];
-
-const DEMO_PASSWORD = 'Password123';
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,7 +26,6 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -53,11 +42,6 @@ export default function LoginPage() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not sign in');
     }
-  };
-
-  const useDemoAccount = (email: string): void => {
-    setValue('email', email, { shouldValidate: true });
-    setValue('password', DEMO_PASSWORD, { shouldValidate: true });
   };
 
   return (
@@ -116,26 +100,6 @@ export default function LoginPage() {
           Sign in
         </Button>
       </form>
-
-      <div className="my-7 flex items-center gap-3">
-        <span className="h-px flex-1 bg-line" />
-        <span className="text-xs font-medium text-ink-subtle">Explore the demo</span>
-        <span className="h-px flex-1 bg-line" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        {DEMO_ACCOUNTS.map((account) => (
-          <button
-            key={account.email}
-            type="button"
-            onClick={() => useDemoAccount(account.email)}
-            className="rounded-xl border border-line bg-surface px-3 py-2.5 text-left transition-colors hover:border-brand hover:bg-brand-soft"
-          >
-            <span className="block text-[13px] font-medium text-ink">{account.label}</span>
-            <span className="block truncate text-[11px] text-ink-subtle">{account.email}</span>
-          </button>
-        ))}
-      </div>
 
       <p className="mt-6 text-center text-[13px] text-ink-muted">
         Setting up a new restaurant?{' '}

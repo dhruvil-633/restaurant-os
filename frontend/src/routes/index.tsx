@@ -4,17 +4,23 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageLoader } from '@/components/ui/feedback';
 import { useAuthStore } from '@/store/authStore';
-import { ROLE_HOME } from '@/constants/navigation';
+import { MANAGEMENT_ROLES, ROLE_HOME } from '@/constants/navigation';
 import type { UserRole } from '@/types';
 
-/* Route-level code splitting keeps the initial bundle to the shell plus the
-   screen actually being visited. */
+/* Public, no token required. */
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
+const CustomerOrderPage = lazy(() => import('@/pages/CustomerOrderPage'));
+const TrackOrderPage = lazy(() => import('@/pages/TrackOrderPage'));
+
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'));
 
+/* Two different dashboards — only the one for your role is downloaded. */
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const MyDashboardPage = lazy(() => import('@/pages/MyDashboardPage'));
+
 const FloorPage = lazy(() => import('@/pages/FloorPage'));
 const OrdersPage = lazy(() => import('@/pages/OrdersPage'));
 const NewOrderPage = lazy(() => import('@/pages/NewOrderPage'));
@@ -40,7 +46,6 @@ function RequireAuth({ children }: { children: ReactNode }) {
     // Remember where they were headed so login can return them there.
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
-
   return <>{children}</>;
 }
 
@@ -49,7 +54,6 @@ function RequireRole({ roles, children }: { roles: UserRole[]; children: ReactNo
 
   if (!role) return <Navigate to="/login" replace />;
   if (!roles.includes(role)) return <Navigate to={ROLE_HOME[role]} replace />;
-
   return <>{children}</>;
 }
 
@@ -61,6 +65,17 @@ function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * Owners and managers get the business dashboard; everyone else gets their own
+ * shift. Splitting here rather than inside one page means a chef never
+ * downloads the charting bundle.
+ */
+function RoleDashboard() {
+  const role = useAuthStore((state) => state.user?.role);
+  const isManagement = role !== undefined && MANAGEMENT_ROLES.includes(role);
+  return isManagement ? <DashboardPage /> : <MyDashboardPage />;
+}
+
 const FLOOR: UserRole[] = ['owner', 'manager', 'cashier', 'waiter'];
 const KITCHEN: UserRole[] = ['owner', 'manager', 'chef', 'kitchen_staff'];
 const MANAGEMENT: UserRole[] = ['owner', 'manager'];
@@ -69,6 +84,11 @@ export function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+        {/* ── Public ─────────────────────────────────────────────── */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/order" element={<CustomerOrderPage />} />
+        <Route path="/track" element={<TrackOrderPage />} />
+
         <Route
           element={
             <RedirectIfAuthenticated>
@@ -82,6 +102,7 @@ export function AppRoutes() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
+        {/* ── Authenticated app ──────────────────────────────────── */}
         <Route
           element={
             <RequireAuth>
@@ -89,7 +110,7 @@ export function AppRoutes() {
             </RequireAuth>
           }
         >
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<RoleDashboard />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/menu" element={<MenuPage />} />
@@ -151,7 +172,6 @@ export function AppRoutes() {
               </RequireRole>
             }
           />
-
           <Route
             path="/kitchen"
             element={
@@ -160,7 +180,6 @@ export function AppRoutes() {
               </RequireRole>
             }
           />
-
           <Route
             path="/team"
             element={

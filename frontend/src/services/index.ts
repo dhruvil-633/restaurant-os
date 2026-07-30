@@ -20,6 +20,10 @@ import type {
   MenuCategoryWithItems,
   MenuItem,
   MenuPerformance,
+  MyPerformance,
+  PublicMenu,
+  PublicOrderReceipt,
+  PublicOrderStatus,
   Order,
   PeakHours,
   PerformanceEntry,
@@ -189,6 +193,8 @@ export const inventoryService = {
 /* ── Dashboard & analytics ──────────────────────────────────────────────── */
 
 export const dashboardService = {
+  /** Personal shift stats — available to every signed-in role. */
+  me: () => get<MyPerformance>('/dashboard/me'),
   overview: () => get<DashboardOverview>('/dashboard/overview'),
   revenueChart: (days = 14) => get<RevenuePoint[]>('/dashboard/revenue-chart', { days }),
   popularDishes: (params?: Record<string, unknown>) => get<PopularDish[]>('/dashboard/popular-dishes', params),
@@ -261,4 +267,13 @@ export const profileService = {
     post<null>('/auth/change-password', { currentPassword, newPassword }),
   forgotPassword: (email: string) => post<{ resetToken?: string } | null>('/auth/forgot-password', { email }),
   resetPassword: (token: string, password: string) => post<null>('/auth/reset-password', { token, password }),
+};
+
+/* ── Guest-facing (no authentication) ───────────────────────────────────── */
+
+export const publicService = {
+  menu: () => get<PublicMenu>('/public/menu'),
+  createOrder: (body: unknown) => post<PublicOrderReceipt>('/public/orders', body),
+  track: (orderNumber: string, phone: string) =>
+    get<PublicOrderStatus>('/public/orders/track', { orderNumber, phone }),
 };

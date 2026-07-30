@@ -10,17 +10,21 @@ import './index.css';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Live restaurant data goes stale quickly, but not so fast that moving
-      // between screens refetches everything on every navigation.
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-      refetchOnWindowFocus: true,
+      // Sockets push the changes that matter, so cached data can live longer.
+      // A short staleTime plus refetchOnWindowFocus made every tab switch fire
+      // a burst of requests, which reads as lag on a cold free-tier backend.
+      staleTime: 60_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      // One retry, quickly. The old two-retry default stacked on top of the
+      // request timeout, so a sleeping server meant minutes of dead spinner.
       retry: (failureCount, error) => {
-        // Auth and permission failures will never succeed on retry.
         const status = (error as { response?: { status?: number } })?.response?.status;
-        if (status === 401 || status === 403 || status === 404) return false;
-        return failureCount < 2;
+        if (status === 401 || status === 403 || status === 404 || status === 429) return false;
+        return failureCount < 1;
       },
+      retryDelay: 1200,
     },
     mutations: { retry: 0 },
   },

@@ -335,7 +335,13 @@ export default function TeamPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-semibold tabular">
-                            {formatCurrency(employee.monthlySalary)}
+                            {employee.monthlySalary === null ? (
+                              <span className="text-ink-subtle" title="Visible to the owner only">
+                                —
+                              </span>
+                            ) : (
+                              formatCurrency(employee.monthlySalary)
+                            )}
                           </TableCell>
                           <TableCell className="text-sm text-ink-muted">{employee.hiredAt}</TableCell>
                         </TableRow>

@@ -26,7 +26,16 @@ import {
   updateEmployeeSchema,
 } from '../validators/people';
 
-function toEmployeeDto(row: EmployeeRow, linkedRole: string | null = null) {
+/**
+ * `canSeeSalary` is owner-only. A manager runs the rota and the floor, but pay
+ * is not theirs to see, so the field is withheld rather than zeroed — the
+ * client renders "—" for null and never implies someone earns nothing.
+ */
+function toEmployeeDto(
+  row: EmployeeRow,
+  linkedRole: string | null = null,
+  canSeeSalary = false,
+) {
   return {
     id: row.id,
     userId: row.userId,
@@ -40,7 +49,7 @@ function toEmployeeDto(row: EmployeeRow, linkedRole: string | null = null) {
     address: row.address,
     emergencyContact: row.emergencyContact,
     avatarUrl: row.avatarUrl,
-    monthlySalary: toNumber(row.monthlySalary),
+    monthlySalary: canSeeSalary ? toNumber(row.monthlySalary) : null,
     hiredAt: row.hiredAt,
     isActive: row.isActive,
     createdAt: row.createdAt.toISOString(),
@@ -72,6 +81,8 @@ function toShiftDto(row: ShiftRow) {
 }
 
 export const listEmployees = asyncHandler(async (req: Request, res: Response) => {
+  const actor = requireUser(req);
+  const canSeeSalary = actor.role === 'owner';
   const query = listQuerySchema.parse(req.query);
   const department = typeof req.query.department === 'string' ? req.query.department : undefined;
 
@@ -104,7 +115,7 @@ export const listEmployees = asyncHandler(async (req: Request, res: Response) =>
 
   sendSuccess(
     res,
-    rows.map((row) => toEmployeeDto(row.employee, row.linkedRole)),
+    rows.map((row) => toEmployeeDto(row.employee, row.linkedRole, canSeeSalary)),
     'Employees loaded',
     200,
     buildPaginationMeta(query.page, query.limit, total),
@@ -112,6 +123,8 @@ export const listEmployees = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const getEmployee = asyncHandler(async (req: Request, res: Response) => {
+  const actor = requireUser(req);
+  const canSeeSalary = actor.role === 'owner';
   const id = req.params.id as string;
 
   const [row] = await db
@@ -151,7 +164,7 @@ export const getEmployee = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(
     res,
     {
-      ...toEmployeeDto(row.employee, row.linkedRole),
+      ...toEmployeeDto(row.employee, row.linkedRole, canSeeSalary),
       attendance: attendanceRows.map(toAttendanceDto),
       shifts: shiftRows.map(toShiftDto),
       attendanceRate,

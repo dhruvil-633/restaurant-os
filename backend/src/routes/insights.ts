@@ -14,6 +14,7 @@ import {
   getRecentActivity,
   getRevenueChart,
 } from '../controllers/dashboardController';
+import { getMyPerformance } from '../controllers/personalController';
 import {
   exportCustomersCsv,
   exportEmployeesCsv,
@@ -48,11 +49,19 @@ import { uuidParamSchema } from '../validators/common';
 export const dashboardRouter = Router();
 dashboardRouter.use(authenticate);
 
-dashboardRouter.get('/overview', getOverview);
-dashboardRouter.get('/revenue-chart', getRevenueChart);
-dashboardRouter.get('/popular-dishes', getPopularDishes);
-dashboardRouter.get('/order-mix', getOrderTypeBreakdown);
-dashboardRouter.get('/activity', getRecentActivity);
+// Every signed-in role can see their own shift; the business-wide figures
+// below are what management uses.
+dashboardRouter.get('/me', getMyPerformance);
+
+// Business-wide figures are management-only; floor and kitchen staff get
+// their own numbers from /dashboard/me instead.
+const management = authorize('owner', 'manager');
+
+dashboardRouter.get('/overview', management, getOverview);
+dashboardRouter.get('/revenue-chart', management, getRevenueChart);
+dashboardRouter.get('/popular-dishes', management, getPopularDishes);
+dashboardRouter.get('/order-mix', management, getOrderTypeBreakdown);
+dashboardRouter.get('/activity', management, getRecentActivity);
 
 /* ── Analytics ──────────────────────────────────────────────────────────── */
 
@@ -82,7 +91,8 @@ reportRouter.get('/revenue/export', exportRevenueCsv);
 reportRouter.get('/orders/export', exportOrdersCsv);
 reportRouter.get('/customers/export', exportCustomersCsv);
 reportRouter.get('/inventory/export', exportInventoryCsv);
-reportRouter.get('/employees/export', exportEmployeesCsv);
+// The employee export carries salary figures.
+reportRouter.get('/employees/export', authorize('owner'), exportEmployeesCsv);
 reportRouter.get('/menu-sales/export', exportMenuSalesCsv);
 
 /* ── Notifications ──────────────────────────────────────────────────────── */
@@ -113,4 +123,6 @@ settingsRouter.use(authenticate);
 
 settingsRouter.get('/', getRestaurantSettings);
 settingsRouter.get('/workspace-status', getWorkspaceStatus);
-settingsRouter.patch('/', authorize('owner', 'manager'), updateRestaurantSettings);
+// Tax rate, loyalty accrual and service charge move real money, so only an
+// owner may change them. Managers see the values read-only.
+settingsRouter.patch('/', authorize('owner'), updateRestaurantSettings);

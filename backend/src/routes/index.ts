@@ -18,10 +18,15 @@ import {
 } from './insights';
 import { menuRouter } from './menu';
 import { kitchenRouter, orderRouter } from './orders';
+import { publicRouter } from './publicRoutes';
 import { tableRouter } from './tables';
 import { userRouter } from './users';
 
 export const apiRouter = Router();
+
+// Guest-facing routes — mounted before the authenticated ones and rate
+// limited independently inside the router itself.
+apiRouter.use('/public', publicRouter);
 
 apiRouter.get('/', (_req, res) => {
   res.json({

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { AppRoutes } from '@/routes';
@@ -10,8 +10,12 @@ import { QUERY_KEYS } from '@/constants/socketEvents';
 import { configureCurrency } from '@/lib/utils';
 import { PageLoader } from '@/components/ui/feedback';
 
+/** Routes a guest can reach without a session. */
+const PUBLIC_PATHS = ['/', '/order', '/track', '/login', '/register', '/forgot-password', '/reset-password'];
+
 export function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const status = useAuthStore((state) => state.status);
   const bootstrap = useAuthStore((state) => state.bootstrap);
   const isAuthenticated = status === 'authenticated';
@@ -43,7 +47,10 @@ export function App() {
     if (settings) configureCurrency(settings.currencySymbol, settings.currency);
   }, [settings]);
 
-  if (status === 'idle' || status === 'loading') {
+  // Blocking the whole app on the session probe would leave a guest staring
+  // at a spinner while a sleeping API wakes up, so public pages render at once.
+  const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
+  if ((status === 'idle' || status === 'loading') && !isPublicPath) {
     return <PageLoader label="Starting RestaurantOS" />;
   }
 

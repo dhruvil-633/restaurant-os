@@ -30,7 +30,7 @@ const KITCHEN: UserRole[] = ['owner', 'manager', 'chef', 'kitchen_staff'];
 const MANAGEMENT: UserRole[] = ['owner', 'manager'];
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', to: '/', icon: LayoutDashboard, roles: ALL_ROLES, section: 'Operations' },
+  { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, roles: ALL_ROLES, section: 'Operations' },
   { label: 'Floor', to: '/floor', icon: Store, roles: FLOOR, section: 'Operations' },
   { label: 'Orders', to: '/orders', icon: ClipboardList, roles: FLOOR, section: 'Operations' },
   { label: 'Kitchen', to: '/kitchen', icon: ChefHat, roles: KITCHEN, section: 'Operations' },
@@ -61,10 +61,18 @@ export function navItemsForRole(role: UserRole | undefined): NavItem[] {
 
 /** Where each role lands after signing in — their most useful screen. */
 export const ROLE_HOME: Record<UserRole, string> = {
-  owner: '/',
-  manager: '/',
-  cashier: '/orders',
-  waiter: '/floor',
-  chef: '/kitchen',
-  kitchen_staff: '/kitchen',
+  owner: '/dashboard',
+  manager: '/dashboard',
+  cashier: '/dashboard',
+  waiter: '/dashboard',
+  chef: '/dashboard',
+  kitchen_staff: '/dashboard',
 };
+
+/** Roles that see restaurant-wide figures rather than their own shift. */
+export const MANAGEMENT_ROLES: UserRole[] = ['owner', 'manager'];
+
+/** Owner-only capabilities — the manager runs operations, not the business. */
+export function isOwner(role: UserRole | undefined): boolean {
+  return role === 'owner';
+}

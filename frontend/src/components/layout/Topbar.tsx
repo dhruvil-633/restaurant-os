@@ -63,7 +63,7 @@ export function Topbar({ socketConnected }: { socketConnected: boolean }) {
   const { data: notifications } = useQuery({
     queryKey: QUERY_KEYS.notifications,
     queryFn: () => notificationService.list(20),
-    refetchInterval: 90_000,
+    refetchInterval: 180_000,
   });
 
   const markAllRead = useMutation({

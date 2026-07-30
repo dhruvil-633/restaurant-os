@@ -156,7 +156,8 @@ employeeRouter.patch(
   updateEmployee,
 );
 employeeRouter.delete('/shifts/:id', validate({ params: uuidParamSchema }), deleteShift);
-employeeRouter.delete('/:id', validate({ params: uuidParamSchema }), deleteEmployee);
+// Removing a person from the payroll is an owner decision.
+employeeRouter.delete('/:id', authorize('owner'), validate({ params: uuidParamSchema }), deleteEmployee);
 
 /* ── Inventory ──────────────────────────────────────────────────────────── */
 

@@ -36,7 +36,9 @@ type FormValues = z.infer<typeof schema>;
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const role = useAuthStore((state) => state.user?.role);
-  const canEdit = role === 'owner' || role === 'manager';
+  // The API restricts this to owners, so the form mirrors it rather than
+  // letting a manager fill it in and hit a 403 on save.
+  const canEdit = role === 'owner';
   const theme = useUiStore((state) => state.theme);
   const setTheme = useUiStore((state) => state.setTheme);
 
@@ -236,7 +238,7 @@ export default function SettingsPage() {
 
       {!canEdit && (
         <p className="mt-4 text-center text-sm text-ink-subtle">
-          Only owners and managers can change restaurant settings.
+          Only the owner can change restaurant settings. You can view them here.
         </p>
       )}
     </>

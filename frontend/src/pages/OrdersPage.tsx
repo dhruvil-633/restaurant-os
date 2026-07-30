@@ -46,7 +46,7 @@ export default function OrdersPage() {
         type: type === 'all' ? undefined : type,
       }),
     placeholderData: keepPreviousData,
-    refetchInterval: 45_000,
+    refetchInterval: 150_000,
   });
 
   const rows = orders.data?.data ?? [];

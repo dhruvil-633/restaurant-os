@@ -52,9 +52,34 @@ export const tokenStore = {
 export const api: AxiosInstance = axios.create({
   baseURL: `${API_ORIGIN}/api`,
   withCredentials: true,
-  timeout: 30_000,
+  // Render's free tier sleeps after 15 minutes idle and takes ~50s to wake.
+  // A 30s timeout guarantees the first request of a session fails even though
+  // the server is coming up fine, so the ceiling sits above the cold start.
+  timeout: 70_000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+/** True while the very first request of a session is still in flight. */
+let coldStartPending = true;
+type ColdStartListener = (waking: boolean) => void;
+const coldStartListeners = new Set<ColdStartListener>();
+
+export function onColdStartChange(listener: ColdStartListener): () => void {
+  coldStartListeners.add(listener);
+  return () => coldStartListeners.delete(listener);
+}
+
+function settleColdStart(): void {
+  if (!coldStartPending) return;
+  coldStartPending = false;
+  coldStartListeners.forEach((listener) => listener(false));
+}
+
+/** Announces a slow first request so the UI can explain the wait. */
+export function markWakingIfSlow(): void {
+  if (!coldStartPending) return;
+  coldStartListeners.forEach((listener) => listener(true));
+}
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = tokenStore.getAccessToken();
@@ -95,8 +120,13 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
 }
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    settleColdStart();
+    return response;
+  },
   async (error: AxiosError<ApiError>) => {
+    // A response of any kind means the server is awake.
+    if (error.response) settleColdStart();
     const original = error.config as RetriableConfig | undefined;
     const status = error.response?.status;
 

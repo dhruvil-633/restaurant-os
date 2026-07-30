@@ -63,7 +63,7 @@ export default function KitchenPage() {
     queryFn: kitchenService.queue,
     // Sockets push most changes, but a slow poll catches anything missed
     // while a tab was backgrounded.
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   });
 
   const advance = useMutation({

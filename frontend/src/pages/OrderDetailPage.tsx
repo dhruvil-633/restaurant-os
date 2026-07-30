@@ -61,7 +61,7 @@ export default function OrderDetailPage() {
     queryKey: QUERY_KEYS.order(id),
     queryFn: () => orderService.get(id),
     enabled: Boolean(id),
-    refetchInterval: 30_000,
+    refetchInterval: 90_000,
   });
 
   const invalidate = (): void => {

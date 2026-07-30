@@ -69,13 +69,13 @@ export default function FloorPage() {
   const tables = useQuery({
     queryKey: QUERY_KEYS.tables,
     queryFn: () => tableService.list(),
-    refetchInterval: 45_000,
+    refetchInterval: 120_000,
   });
 
   const waitTime = useQuery({
     queryKey: QUERY_KEYS.waitTime,
     queryFn: tableService.waitTime,
-    refetchInterval: 60_000,
+    refetchInterval: 180_000,
   });
 
   const waiters = useQuery({

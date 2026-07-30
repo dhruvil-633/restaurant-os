@@ -54,7 +54,7 @@ export default function DashboardPage() {
   const overview = useQuery({
     queryKey: QUERY_KEYS.dashboardOverview,
     queryFn: dashboardService.overview,
-    refetchInterval: 60_000,
+    refetchInterval: 180_000,
   });
 
   const revenue = useQuery({
@@ -75,7 +75,7 @@ export default function DashboardPage() {
   const activity = useQuery({
     queryKey: QUERY_KEYS.activity,
     queryFn: () => dashboardService.activity(12),
-    refetchInterval: 60_000,
+    refetchInterval: 180_000,
   });
 
   const stats = overview.data;
