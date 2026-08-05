@@ -36,6 +36,13 @@ export function createApp(): Application {
           callback(null, true);
           return;
         }
+        // In development Vite hops to another port whenever the default is
+        // taken, so pinning an exact list guarantees an eventual CORS failure
+        // that looks like a broken app. Any loopback origin is fine locally.
+        if (!env.isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          callback(null, true);
+          return;
+        }
         // Vercel preview deployments get a fresh subdomain per commit.
         if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) {
           callback(null, true);
