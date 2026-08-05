@@ -1,6 +1,6 @@
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BarChart3, ChefHat, Store, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, BarChart3, ChefHat, Store, UtensilsCrossed } from 'lucide-react';
 
 const HIGHLIGHTS = [
   { icon: Store, title: 'Live floor plan', copy: 'Every table, order and waiter at a glance.' },
@@ -19,12 +19,12 @@ export function AuthLayout() {
         <div className="absolute -bottom-40 -right-24 size-[30rem] rounded-full bg-orange-500/18 blur-[110px]" />
 
         <div className="relative flex h-full flex-col justify-between p-12 xl:p-16">
-          <div className="flex items-center gap-2.5">
+          <Link to="/" className="flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80">
             <span className="flex size-9 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
               <UtensilsCrossed className="size-5 text-white" />
             </span>
             <span className="text-lg font-semibold tracking-tight text-white">RestaurantOS</span>
-          </div>
+          </Link>
 
           <div className="max-w-md">
             <motion.h1
@@ -74,6 +74,15 @@ export function AuthLayout() {
 
       <div className="flex items-center justify-center bg-canvas px-5 py-10 sm:px-8">
         <div className="w-full max-w-[26rem]">
+          {/* Always offer a way back out of the auth flow. */}
+          <Link
+            to="/"
+            className="mb-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-muted transition-colors hover:text-ink"
+          >
+            <ArrowLeft className="size-3.5" />
+            Back to home
+          </Link>
+
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
             <span className="flex size-9 items-center justify-center rounded-xl bg-brand">
               <UtensilsCrossed className="size-5 text-white" />

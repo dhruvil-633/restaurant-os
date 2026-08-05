@@ -9,6 +9,7 @@ import {
   Phone,
   ShoppingBag,
   Sparkles,
+  Store,
   UtensilsCrossed,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -188,6 +189,37 @@ export default function LandingPage() {
           </div>
         </section>
       )}
+
+      {/* ── For restaurant owners ────────────────────────────────────── */}
+      <section className="border-t border-line bg-surface">
+        <div className="mx-auto max-w-3xl px-5 py-16 text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas px-3 py-1 text-xs font-medium text-ink-muted">
+            <Store className="size-3.5 text-brand" />
+            Run a restaurant?
+          </span>
+          <h2 className="mt-5 text-2xl font-semibold tracking-tight text-ink text-balance sm:text-3xl">
+            Put your own restaurant on RestaurantOS
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-ink-muted text-balance">
+            Floor plan, kitchen display, inventory that deducts itself, and the analytics
+            that tell you where the evening actually went.
+          </p>
+          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto" asChild>
+              <Link to="/register">
+                <Store />
+                Set up your restaurant
+              </Link>
+            </Button>
+            <Button size="lg" variant="ghost" className="w-full sm:w-auto" asChild>
+              <Link to="/login">
+                <LogIn />
+                I already have an account
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-6 text-xs text-ink-subtle sm:flex-row">
