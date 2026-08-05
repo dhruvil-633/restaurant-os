@@ -11,6 +11,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { restaurants } from './tenant';
 import { attendanceStatusEnum } from './enums';
 import { users } from './auth';
 
@@ -22,6 +23,11 @@ export const customers = pgTable(
   'customers',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     name: varchar('name', { length: 120 }).notNull(),
     phone: varchar('phone', { length: 32 }).notNull().unique(),
     email: varchar('email', { length: 160 }),
@@ -50,6 +56,11 @@ export const employees = pgTable(
   'employees',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     employeeCode: varchar('employee_code', { length: 24 }).notNull().unique(),
     name: varchar('name', { length: 120 }).notNull(),

@@ -1,4 +1,5 @@
 export * from './enums';
+export * from './tenant';
 export * from './auth';
 export * from './menu';
 export * from './people';

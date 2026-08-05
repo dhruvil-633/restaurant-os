@@ -10,12 +10,18 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { restaurants } from './tenant';
 import { menuCategoryTypeEnum } from './enums';
 
 export const menuCategories = pgTable(
   'menu_categories',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     name: varchar('name', { length: 100 }).notNull(),
     slug: varchar('slug', { length: 120 }).notNull().unique(),
     type: menuCategoryTypeEnum('type').notNull().default('food'),
@@ -35,6 +41,11 @@ export const menuItems = pgTable(
   'menu_items',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     categoryId: uuid('category_id')
       .notNull()
       .references(() => menuCategories.id, { onDelete: 'restrict' }),

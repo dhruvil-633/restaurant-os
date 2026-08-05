@@ -10,6 +10,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { restaurants } from './tenant';
 import {
   inventoryTransactionTypeEnum,
   inventoryUnitEnum,
@@ -24,6 +25,11 @@ export const suppliers = pgTable(
   'suppliers',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     name: varchar('name', { length: 140 }).notNull(),
     contactName: varchar('contact_name', { length: 120 }),
     phone: varchar('phone', { length: 32 }),
@@ -43,6 +49,11 @@ export const ingredients = pgTable(
   'ingredients',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     name: varchar('name', { length: 140 }).notNull().unique(),
     category: varchar('category', { length: 80 }).notNull().default('General'),
     unit: inventoryUnitEnum('unit').notNull().default('kg'),
@@ -118,6 +129,11 @@ export const purchases = pgTable(
   'purchases',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     purchaseNumber: varchar('purchase_number', { length: 24 }).notNull().unique(),
     supplierId: uuid('supplier_id')
       .notNull()

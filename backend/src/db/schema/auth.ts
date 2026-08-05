@@ -1,4 +1,5 @@
 import { boolean, index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { restaurants } from './tenant';
 import { userRoleEnum } from './enums';
 
 /**
@@ -17,6 +18,11 @@ export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     name: varchar('name', { length: 120 }).notNull(),
     email: varchar('email', { length: 160 }).notNull().unique(),
     passwordHash: text('password_hash').notNull(),

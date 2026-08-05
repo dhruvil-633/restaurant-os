@@ -10,6 +10,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { restaurants } from './tenant';
 import {
   orderItemStatusEnum,
   orderPriorityEnum,
@@ -33,6 +34,11 @@ export const restaurantTables = pgTable(
   'restaurant_tables',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     label: varchar('label', { length: 24 }).notNull().unique(),
     capacity: integer('capacity').notNull().default(4),
     section: varchar('section', { length: 60 }).notNull().default('Main Hall'),
@@ -62,6 +68,11 @@ export const orders = pgTable(
   'orders',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     orderNumber: varchar('order_number', { length: 24 }).notNull().unique(),
     type: orderTypeEnum('type').notNull().default('dine_in'),
     status: orderStatusEnum('status').notNull().default('pending'),
@@ -139,6 +150,11 @@ export const reservations = pgTable(
   'reservations',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     reservationCode: varchar('reservation_code', { length: 24 }).notNull().unique(),
     customerId: uuid('customer_id').references(() => customers.id, { onDelete: 'set null' }),
     tableId: uuid('table_id').references(() => restaurantTables.id, { onDelete: 'set null' }),
@@ -166,6 +182,11 @@ export const feedback = pgTable(
   'feedback',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     orderId: uuid('order_id').references(() => orders.id, { onDelete: 'set null' }),
     customerId: uuid('customer_id').references(() => customers.id, { onDelete: 'set null' }),
     rating: smallint('rating').notNull(),

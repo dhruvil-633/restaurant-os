@@ -8,6 +8,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { restaurants } from './tenant';
 import { notificationTypeEnum, userRoleEnum } from './enums';
 import { users } from './auth';
 
@@ -19,6 +20,11 @@ export const notifications = pgTable(
   'notifications',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
     targetRole: userRoleEnum('target_role'),
     type: notificationTypeEnum('type').notNull().default('system'),
@@ -45,6 +51,11 @@ export const activityLogs = pgTable(
   'activity_logs',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    /** Owning tenant. Nullable during the additive migration; every
+     *  existing row is backfilled to the default restaurant. */
+    restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'cascade',
+    }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     actorName: varchar('actor_name', { length: 120 }),
     action: varchar('action', { length: 80 }).notNull(),
@@ -63,6 +74,11 @@ export const activityLogs = pgTable(
 
 export const settings = pgTable('settings', {
   id: uuid('id').primaryKey().defaultRandom(),
+  /** Owning tenant. Nullable during the additive migration; every
+   *  existing row is backfilled to the default restaurant. */
+  restaurantId: uuid('restaurant_id').references(() => restaurants.id, {
+    onDelete: 'cascade',
+  }),
   key: varchar('key', { length: 80 }).notNull().unique(),
   value: jsonb('value').$type<unknown>().notNull(),
   description: text('description'),
