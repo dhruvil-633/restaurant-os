@@ -32,6 +32,9 @@ const CustomersPage = lazy(() => import('@/pages/CustomersPage'));
 const CustomerDetailPage = lazy(() => import('@/pages/CustomerDetailPage'));
 const InventoryPage = lazy(() => import('@/pages/InventoryPage'));
 const TeamPage = lazy(() => import('@/pages/TeamPage'));
+const RotaPage = lazy(() => import('@/pages/RotaPage'));
+const RewardsPage = lazy(() => import('@/pages/RewardsPage'));
+const ReorderPage = lazy(() => import('@/pages/ReorderPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -185,6 +188,30 @@ export function AppRoutes() {
             element={
               <RequireRole roles={MANAGEMENT}>
                 <TeamPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/rota"
+            element={
+              <RequireRole roles={MANAGEMENT}>
+                <RotaPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/rewards"
+            element={
+              <RequireRole roles={MANAGEMENT}>
+                <RewardsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/reorder"
+            element={
+              <RequireRole roles={MANAGEMENT}>
+                <ReorderPage />
               </RequireRole>
             }
           />

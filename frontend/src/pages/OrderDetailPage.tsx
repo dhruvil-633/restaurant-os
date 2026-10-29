@@ -29,6 +29,7 @@ import { ErrorState, PageLoader } from '@/components/ui/feedback';
 import { Field, Input, Textarea } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { SplitBillPanel } from '@/components/shared/SplitBillPanel';
 import { QUERY_KEYS } from '@/constants/socketEvents';
 import { cn, formatCurrency, formatDateTime, formatDuration, titleCase } from '@/lib/utils';
 import { getErrorMessage } from '@/services/api';
@@ -313,6 +314,15 @@ export default function OrderDetailPage() {
               {data.notes && <Detail label="Note" value={data.notes} />}
             </CardContent>
           </Card>
+
+          {canSettle && (
+            <SplitBillPanel
+              orderId={id}
+              customerId={data.customerId}
+              isOpen={isOpen && data.paymentStatus !== 'paid'}
+              onSettled={invalidate}
+            />
+          )}
         </div>
       </div>
 

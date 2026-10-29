@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -14,6 +14,7 @@ import {
   Search,
   ShoppingBag,
   Trash2,
+  Utensils,
   UtensilsCrossed,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,6 +42,20 @@ export default function CustomerOrderPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [receipt, setReceipt] = useState<PublicOrderReceipt | null>(null);
 
+  // A scanned QR code is the only way a table gets set — never a list the
+  // guest picks from, which would let anyone charge another table.
+  const [params] = useSearchParams();
+  const tableId = params.get('table') ?? '';
+
+  const table = useQuery({
+    queryKey: ['public', 'table', tableId],
+    queryFn: () => publicService.table(tableId),
+    enabled: Boolean(tableId),
+    retry: false,
+  });
+
+  const atTable = Boolean(tableId) && table.isSuccess;
+
   const [orderType, setOrderType] = useState<'takeaway' | 'delivery'>('takeaway');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -57,11 +72,12 @@ export default function CustomerOrderPage() {
   const placeOrder = useMutation({
     mutationFn: () =>
       publicService.createOrder({
-        type: orderType,
+        type: atTable ? 'dine_in' : orderType,
+        tableId: atTable ? tableId : undefined,
         customerName: name.trim(),
         customerPhone: phone.trim(),
         customerEmail: email.trim() || undefined,
-        deliveryAddress: orderType === 'delivery' ? address.trim() : undefined,
+        deliveryAddress: !atTable && orderType === 'delivery' ? address.trim() : undefined,
         notes: notes.trim() || undefined,
         items: cart.map((line) => ({ menuItemId: line.item.id, quantity: line.quantity })),
       }),
@@ -109,7 +125,7 @@ export default function CustomerOrderPage() {
   const detailsValid =
     name.trim().length >= 2 &&
     phone.replace(/\D/g, '').length >= 7 &&
-    (orderType !== 'delivery' || address.trim().length >= 10);
+    (atTable || orderType !== 'delivery' || address.trim().length >= 10);
 
   /* ── Confirmation ───────────────────────────────────────────────── */
   if (step === 'done' && receipt) {
@@ -208,6 +224,26 @@ export default function CustomerOrderPage() {
             We only need enough to find you when the food is ready.
           </p>
 
+          {atTable ? (
+            <div className="mt-6 flex items-center gap-3 rounded-xl border border-brand bg-brand-soft p-4">
+              <Utensils className="size-5 shrink-0 text-brand" />
+              <div>
+                <p className="text-sm font-semibold text-brand-soft-ink">
+                  Table {table.data?.label}
+                </p>
+                <p className="text-xs text-brand-soft-ink/80">
+                  {table.data?.section} · brought to your table
+                </p>
+              </div>
+            </div>
+          ) : (
+          <>
+          {tableId && table.isError && (
+            <p className="mt-6 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-xs text-warning-soft-ink">
+              That QR code did not match a table, so order as takeaway or delivery instead and
+              mention your table to a member of staff.
+            </p>
+          )}
           <div className="mt-6 grid grid-cols-2 gap-2">
             {(['takeaway', 'delivery'] as const).map((option) => (
               <button
@@ -230,6 +266,8 @@ export default function CustomerOrderPage() {
               </button>
             ))}
           </div>
+          </>
+          )}
 
           <div className="mt-5 space-y-4">
             <Field label="Your name" required>
@@ -251,7 +289,7 @@ export default function CustomerOrderPage() {
                 placeholder="you@example.com"
               />
             </Field>
-            {orderType === 'delivery' && (
+            {!atTable && orderType === 'delivery' && (
               <Field label="Delivery address" required>
                 <Textarea
                   rows={3}

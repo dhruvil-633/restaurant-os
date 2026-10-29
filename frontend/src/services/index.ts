@@ -20,6 +20,12 @@ import type {
   MenuCategoryWithItems,
   MenuItem,
   MenuPerformance,
+  BillState,
+  LoyaltyReward,
+  PublicTable,
+  ReorderReport,
+  RewardList,
+  RewardRedemption,
   MyPerformance,
   PublicMenu,
   PublicOrderReceipt,
@@ -271,8 +277,34 @@ export const profileService = {
 
 /* ── Guest-facing (no authentication) ───────────────────────────────────── */
 
+export const commerceService = {
+  // Split bill
+  payments: (orderId: string) => get<BillState>(`/commerce/orders/${orderId}/payments`),
+  addPayment: (orderId: string, body: unknown) =>
+    post<BillState>(`/commerce/orders/${orderId}/payments`, body),
+  voidPayment: (orderId: string, paymentId: string) =>
+    del<BillState>(`/commerce/orders/${orderId}/payments/${paymentId}`),
+
+  // Loyalty
+  rewards: (customerId?: string) => get<RewardList>('/commerce/rewards', { customerId }),
+  createReward: (body: unknown) => post<LoyaltyReward>('/commerce/rewards', body),
+  updateReward: (id: string, body: unknown) => patch<LoyaltyReward>(`/commerce/rewards/${id}`, body),
+  retireReward: (id: string) => del<null>(`/commerce/rewards/${id}`),
+  redeem: (body: { rewardId: string; orderId: string; customerId?: string }) =>
+    post<{ rewardName: string; pointsSpent: number; discountApplied: number; orderTotal: number }>(
+      '/commerce/rewards/redeem',
+      body,
+    ),
+  redemptions: () => get<RewardRedemption[]>('/commerce/rewards/redemptions'),
+
+  // Purchasing intelligence
+  reorder: (params?: { lookbackDays?: number; coverDays?: number }) =>
+    get<ReorderReport>('/commerce/reorder', params),
+};
+
 export const publicService = {
   menu: () => get<PublicMenu>('/public/menu'),
+  table: (tableId: string) => get<PublicTable>('/public/table', { tableId }),
   createOrder: (body: unknown) => post<PublicOrderReceipt>('/public/orders', body),
   track: (orderNumber: string, phone: string) =>
     get<PublicOrderStatus>('/public/orders/track', { orderNumber, phone }),

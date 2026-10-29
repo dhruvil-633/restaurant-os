@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import {
   createPublicOrder,
   getPublicMenu,
+  getPublicTable,
   trackPublicOrder,
 } from '../controllers/publicController';
 import { validate } from '../middlewares/validate';
@@ -40,5 +41,6 @@ const orderLimiter = rateLimit({
 });
 
 publicRouter.get('/menu', browseLimiter, getPublicMenu);
+publicRouter.get('/table', browseLimiter, getPublicTable);
 publicRouter.get('/orders/track', browseLimiter, trackPublicOrder);
 publicRouter.post('/orders', orderLimiter, validate({ body: publicOrderSchema }), createPublicOrder);

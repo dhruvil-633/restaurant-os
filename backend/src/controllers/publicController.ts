@@ -1,7 +1,14 @@
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { Request, Response } from 'express';
 import { db } from '../db';
-import { customers, menuCategories, menuItems, orderItems, orders } from '../db/schema';
+import {
+  customers,
+  menuCategories,
+  menuItems,
+  orderItems,
+  orders,
+  restaurantTables,
+} from '../db/schema';
 import { recordActivity } from '../services/activityLog';
 import { notifyRoles } from '../services/notification';
 import { calculateTotals, generateOrderNumber, type PricedLine } from '../services/orderService';
@@ -168,6 +175,7 @@ export const createPublicOrder = asyncHandler(async (req: Request, res: Response
           type: input.type,
           status: 'pending',
           customerId,
+          tableId: input.type === 'dine_in' ? (input.tableId ?? null) : null,
           guestCount: 1,
           subtotal: String(totals.subtotal),
           taxAmount: String(totals.taxAmount),
@@ -196,6 +204,14 @@ export const createPublicOrder = asyncHandler(async (req: Request, res: Response
         notes: line.notes,
       })),
     );
+
+    // A scanned table is now in use, so the floor plan should say so.
+    if (input.type === 'dine_in' && input.tableId) {
+      await tx
+        .update(restaurantTables)
+        .set({ status: 'occupied', updatedAt: new Date() })
+        .where(eq(restaurantTables.id, input.tableId));
+    }
 
     return orderRow;
   });
@@ -307,5 +323,35 @@ export const trackPublicOrder = asyncHandler(async (req: Request, res: Response)
       items,
     },
     'Order found',
+  );
+});
+
+/**
+ * Resolves a table from the id embedded in its QR code.
+ *
+ * Returns only the label and whether ordering is possible — a scanned code
+ * must never expose the floor plan, the covers, or what the table has spent.
+ */
+export const getPublicTable = asyncHandler(async (req: Request, res: Response) => {
+  const id = typeof req.query.tableId === 'string' ? req.query.tableId : '';
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw ApiError.badRequest('That QR code is not valid');
+
+  const [table] = await db
+    .select({
+      id: restaurantTables.id,
+      label: restaurantTables.label,
+      section: restaurantTables.section,
+      isActive: restaurantTables.isActive,
+    })
+    .from(restaurantTables)
+    .where(eq(restaurantTables.id, id))
+    .limit(1);
+
+  if (!table || !table.isActive) throw ApiError.notFound('Table');
+
+  sendSuccess(
+    res,
+    { id: table.id, label: table.label, section: table.section },
+    `Table ${table.label}`,
   );
 });

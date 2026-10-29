@@ -6,4 +6,5 @@ export * from './people';
 export * from './operations';
 export * from './inventory';
 export * from './system';
+export * from './commerce';
 export * from './relations';

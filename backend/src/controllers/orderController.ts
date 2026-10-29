@@ -7,6 +7,7 @@ import {
   menuItems,
   orderItems,
   orders,
+  payments,
   restaurantTables,
   users,
   type OrderItemRow,
@@ -18,6 +19,7 @@ import { notifyRoles } from '../services/notification';
 import {
   applyOrderToCustomer,
   assertTransitionAllowed,
+  finaliseSettlement,
   calculateTotals,
   consumeInventoryForOrder,
   generateOrderNumber,
@@ -751,37 +753,19 @@ export const settleOrder = asyncHandler(async (req: Request, res: Response) => {
     await recalculateOrderTotals(id);
   }
 
-  const [settled] = await db
-    .update(orders)
-    .set({
-      paymentMethod: input.paymentMethod,
-      paymentStatus: 'paid',
-      status: 'completed',
-      completedAt: now,
-      ...(order.servedAt ? {} : { servedAt: now }),
-      updatedAt: now,
-    })
-    .where(eq(orders.id, id))
-    .returning();
+  // One tender covering the whole bill still goes through the payments ledger,
+  // so a split bill and a single payment report identically.
+  const [fresh] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  await db.insert(payments).values({
+    restaurantId: fresh?.restaurantId ?? null,
+    orderId: id,
+    amount: String(toNumber(fresh?.total)),
+    method: input.paymentMethod,
+    payerLabel: 'Full bill',
+    receivedById: user.id,
+  });
 
-  if (!settled) throw ApiError.notFound('Order');
-
-  await db
-    .update(orderItems)
-    .set({ status: 'served' })
-    .where(and(eq(orderItems.orderId, id), sql`${orderItems.status} <> 'cancelled'`));
-
-  if (settled.tableId) {
-    await db
-      .update(restaurantTables)
-      .set({ status: 'cleaning', assignedWaiterId: null, updatedAt: now })
-      .where(eq(restaurantTables.id, settled.tableId));
-  }
-
-  await consumeInventoryForOrder(id, user.id);
-  if (settled.customerId) {
-    await applyOrderToCustomer(settled.customerId, toNumber(settled.total));
-  }
+  const settled = await finaliseSettlement(id, input.paymentMethod, user.id);
 
   const dto = await loadOrderDto(id);
   realtime.toFloor(SOCKET_EVENTS.ORDER_COMPLETED, dto);

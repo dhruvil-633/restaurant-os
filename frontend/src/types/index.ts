@@ -799,3 +799,100 @@ export interface MyPerformance {
     orderNumber: string;
   }[];
 }
+
+/* ── Split bill ─────────────────────────────────────────────────────────── */
+
+export interface BillPayment {
+  id: string;
+  amount: number;
+  method: PaymentMethod;
+  payerLabel: string | null;
+  reference: string | null;
+  createdAt: string;
+  receivedBy: string | null;
+}
+
+export interface BillState {
+  orderNumber?: string;
+  total: number;
+  paid: number;
+  balance: number;
+  isSettled: boolean;
+  paymentStatus?: PaymentStatus;
+  payments: BillPayment[];
+}
+
+/* ── Loyalty ────────────────────────────────────────────────────────────── */
+
+export type RewardType = 'discount_amount' | 'discount_percent' | 'free_item';
+
+export interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string | null;
+  pointsCost: number;
+  type: RewardType;
+  value: number;
+  menuItemId: string | null;
+  maxDiscount: number | null;
+  isActive: boolean;
+  affordable: boolean | null;
+}
+
+export interface RewardList {
+  customerPoints: number | null;
+  rewards: LoyaltyReward[];
+}
+
+export interface RewardRedemption {
+  id: string;
+  rewardName: string;
+  pointsSpent: number;
+  discountApplied: number;
+  createdAt: string;
+  customerName: string | null;
+  orderNumber: string | null;
+}
+
+/* ── Smart reorder ──────────────────────────────────────────────────────── */
+
+export type ReorderUrgency = 'out' | 'critical' | 'urgent' | 'soon';
+
+export interface ReorderSuggestion {
+  ingredientId: string;
+  name: string;
+  category: string;
+  unit: string;
+  supplierId: string | null;
+  supplierName: string | null;
+  currentStock: number;
+  minStock: number;
+  dailyBurn: number;
+  daysRemaining: number | null;
+  suggestedQuantity: number;
+  estimatedCost: number;
+  urgency: ReorderUrgency;
+  reason: string;
+}
+
+export interface ReorderReport {
+  lookbackDays: number;
+  coverDays: number;
+  totalEstimatedCost: number;
+  counts: { out: number; critical: number; total: number };
+  suggestions: ReorderSuggestion[];
+  bySupplier: {
+    supplierId: string | null;
+    supplierName: string;
+    items: ReorderSuggestion[];
+    total: number;
+  }[];
+}
+
+/* ── QR table ordering ──────────────────────────────────────────────────── */
+
+export interface PublicTable {
+  id: string;
+  label: string;
+  section: string;
+}

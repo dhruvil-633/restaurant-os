@@ -7,6 +7,7 @@ import {
   menuItemIngredients,
   orderItems,
   orders,
+  restaurantTables,
   type OrderRow,
 } from '../db/schema';
 import { logger } from '../config/logger';
@@ -228,4 +229,58 @@ export function timestampsForStatus(status: OrderRow['status'], now: Date): Part
     default:
       return {};
   }
+}
+
+/**
+ * Everything that must happen exactly once when a bill is fully paid.
+ *
+ * Both the single-tender settle and the split-payment ledger converge here, so
+ * "this bill is closed" has one definition — inventory is deducted once, the
+ * guest's lifetime stats move once, and the table is released once, no matter
+ * which route got the bill to zero.
+ */
+export async function finaliseSettlement(
+  orderId: string,
+  paymentMethod: OrderRow['paymentMethod'],
+  userId: string,
+): Promise<OrderRow> {
+  const now = new Date();
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!order) throw ApiError.notFound('Order');
+  if (order.paymentStatus === 'paid') return order;
+
+  const [settled] = await db
+    .update(orders)
+    .set({
+      paymentMethod,
+      paymentStatus: 'paid',
+      status: 'completed',
+      completedAt: now,
+      ...(order.servedAt ? {} : { servedAt: now }),
+      updatedAt: now,
+    })
+    .where(eq(orders.id, orderId))
+    .returning();
+
+  if (!settled) throw ApiError.notFound('Order');
+
+  await db
+    .update(orderItems)
+    .set({ status: 'served' })
+    .where(and(eq(orderItems.orderId, orderId), sql`${orderItems.status} <> 'cancelled'`));
+
+  if (settled.tableId) {
+    await db
+      .update(restaurantTables)
+      .set({ status: 'cleaning', assignedWaiterId: null, updatedAt: now })
+      .where(eq(restaurantTables.id, settled.tableId));
+  }
+
+  await consumeInventoryForOrder(orderId, userId);
+  if (settled.customerId) {
+    await applyOrderToCustomer(settled.customerId, toNumber(settled.total));
+  }
+
+  return settled;
 }

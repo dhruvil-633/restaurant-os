@@ -16,6 +16,7 @@ import {
   settingsRouter,
   uploadRouter,
 } from './insights';
+import { commerceRouter } from './commerce';
 import { menuRouter } from './menu';
 import { kitchenRouter, orderRouter } from './orders';
 import { publicRouter } from './publicRoutes';
@@ -61,6 +62,7 @@ apiRouter.get('/', (_req, res) => {
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/users', userRouter);
 apiRouter.use('/menu', menuRouter);
+apiRouter.use('/commerce', commerceRouter);
 apiRouter.use('/tables', tableRouter);
 apiRouter.use('/orders', orderRouter);
 apiRouter.use('/kitchen', kitchenRouter);

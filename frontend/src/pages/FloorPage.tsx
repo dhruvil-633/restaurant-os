@@ -29,6 +29,7 @@ import {
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { TableQrCode } from '@/components/shared/TableQrCode';
 import { QUERY_KEYS } from '@/constants/socketEvents';
 import { getErrorMessage } from '@/services/api';
 import { tableService, userService } from '@/services';
@@ -418,6 +419,8 @@ export default function FloorPage() {
                     </p>
                   )}
                 </div>
+
+                <TableQrCode tableId={selected.id} label={selected.label} />
               </DialogBody>
 
               <DialogFooter>

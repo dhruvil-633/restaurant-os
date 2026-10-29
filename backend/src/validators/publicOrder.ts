@@ -3,12 +3,15 @@ import { phoneSchema } from './common';
 
 /**
  * Guests ordering from the public page are untrusted, so this schema is
- * deliberately tighter than the staff-facing one: no table assignment, no
- * discounts, no waiter selection, and smaller ceilings on quantity.
+ * deliberately tighter than the staff-facing one: no discounts, no waiter
+ * selection, and smaller ceilings on quantity. A table may only be set by
+ * scanning that table's QR code, never chosen from a list.
  */
 export const publicOrderSchema = z
   .object({
-    type: z.enum(['takeaway', 'delivery']),
+    type: z.enum(['takeaway', 'delivery', 'dine_in']),
+    /** Set when the guest scanned the QR code on a table. */
+    tableId: z.string().uuid().optional(),
     customerName: z.string().trim().min(2, 'Enter your name').max(120),
     customerPhone: phoneSchema,
     customerEmail: z.string().trim().email('Enter a valid email').max(160).optional().or(z.literal('')),
@@ -28,6 +31,10 @@ export const publicOrderSchema = z
   .refine((data) => data.type !== 'delivery' || (data.deliveryAddress ?? '').trim().length >= 10, {
     message: 'Delivery orders need a full address',
     path: ['deliveryAddress'],
+  })
+  .refine((data) => data.type !== 'dine_in' || Boolean(data.tableId), {
+    message: 'Scan the QR code on your table to order to it',
+    path: ['tableId'],
   });
 
 export const trackOrderSchema = z.object({
